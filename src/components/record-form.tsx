@@ -2,6 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type FormState = {
   projectName: string;
@@ -28,8 +29,10 @@ const initialState: FormState = {
 };
 
 const statusOptions = ["泛红", "爆痘", "提亮", "紧致"];
+const RECORDS_STORAGE_KEY = "beauty_records";
 
 export function RecordForm() {
+  const router = useRouter();
   const [formData, setFormData] = useState<FormState>(initialState);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
@@ -40,13 +43,50 @@ export function RecordForm() {
     };
   }, [imagePreviewUrls]);
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    console.log("new-medical-record", {
-      ...formData,
-      rating: Number(formData.rating),
-      imageFiles: imageFiles.map((file) => file.name),
-    });
+  const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+    console.log("submit triggered");
+
+    if (!formData.projectName.trim()) {
+      alert("请填写项目名称后再提交");
+      return;
+    }
+
+    const record = {
+      id: `${Date.now()}`,
+      projectName: formData.projectName.trim(),
+      date: formData.date,
+      area: formData.area,
+      rating: Number(formData.rating) || 0,
+      nextReminderDate: formData.nextReminderDate,
+      todayFeeling: formData.todayFeeling,
+      satisfaction: formData.satisfaction,
+      statusTags: formData.statusTags,
+      imageFileNames: imageFiles.map((file) => file.name),
+      note: formData.note,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log(record);
+
+    try {
+      const raw = localStorage.getItem(RECORDS_STORAGE_KEY);
+      const existing = raw ? (JSON.parse(raw) as Array<typeof record>) : [];
+      const next = Array.isArray(existing) ? [...existing, record] : [record];
+      localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(next));
+    } catch (error) {
+      console.error("save record failed", error);
+      alert("保存失败，请稍后再试");
+      return;
+    }
+
+    imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
+    setFormData(initialState);
+    setImageFiles([]);
+    setImagePreviewUrls([]);
+
+    alert("记录已保存");
+    router.push("/records");
   };
 
   const toggleStatusTag = (tag: string) => {
@@ -67,7 +107,7 @@ export function RecordForm() {
 
   return (
     <form
-      onSubmit={onSubmit}
+      onSubmit={handleSubmit}
       className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e8ddce]"
     >
       <InputField
@@ -204,7 +244,8 @@ export function RecordForm() {
       </div>
       <button
         type="submit"
-        className="w-full rounded-xl bg-gradient-to-r from-[#d8bfb1] to-[#c8a89b] px-4 py-2.5 font-medium text-white transition hover:brightness-105"
+        onClick={() => handleSubmit()}
+        className="relative z-10 w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#d8bfb1] to-[#c8a89b] px-4 py-2.5 font-medium text-white transition hover:brightness-105"
       >
         提交记录
       </button>
