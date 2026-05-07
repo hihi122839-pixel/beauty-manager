@@ -38,7 +38,7 @@ export default function Home() {
       <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_16px_40px_rgba(178,154,122,0.18)] ring-1 ring-white/70 sm:p-8">
         <p className="text-sm font-medium text-[#9f8d74]">当前护理周期</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
-          医美管理助手
+          护理总览
         </h1>
         {latestRecord ? (
           <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-3 sm:gap-4">

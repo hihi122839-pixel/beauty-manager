@@ -173,9 +173,9 @@ export default function SkinPage() {
 
   return (
     <section className="space-y-5 sm:space-y-7">
+      <BackButton />
       <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_12px_30px_rgba(178,154,122,0.15)] ring-1 ring-white/70 sm:p-6">
-        <BackButton />
-        <p className="mt-3 text-sm font-medium text-[#9f8d74]">皮肤状态可视化记录</p>
+        <p className="text-sm font-medium text-[#9f8d74]">皮肤状态可视化记录</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
           皮肤问题记录
         </h1>

@@ -8,6 +8,7 @@ import {
   writeBeautyRecords,
   type SavedRecord,
 } from "@/lib/beauty-records";
+import { useToast } from "@/components/toast-provider";
 
 type FormState = {
   projectName: string;
@@ -37,6 +38,7 @@ const statusOptions = ["泛红", "爆痘", "提亮", "紧致"];
 
 export function RecordForm() {
   const router = useRouter();
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<FormState>(initialState);
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
@@ -51,7 +53,7 @@ export function RecordForm() {
     event.preventDefault();
 
     if (!formData.projectName.trim()) {
-      alert("请填写项目名称后再提交");
+      showToast("请填写项目名称后再提交", "error");
       return;
     }
 
@@ -75,7 +77,7 @@ export function RecordForm() {
       writeBeautyRecords([...existing, record]);
     } catch (error) {
       console.error("save record failed", error);
-      alert("保存失败，请稍后再试");
+      showToast("保存失败，请稍后再试", "error");
       return;
     }
 
@@ -84,7 +86,7 @@ export function RecordForm() {
     setImageFiles([]);
     setImagePreviewUrls([]);
 
-    alert("记录添加完成");
+    showToast("记录添加完成", "success");
     router.push("/records");
   };
 
