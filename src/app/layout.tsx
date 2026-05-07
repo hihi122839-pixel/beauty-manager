@@ -29,9 +29,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-gradient-to-b from-[#fdfaf4] via-[#fcf8f1] to-[#f8f2e8] text-zinc-800">
-        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 py-10 sm:px-6">
-          <header className="mb-10">
-            <div className="flex items-center justify-between">
+        <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-10">
+          <header className="mb-6 sm:mb-10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-base font-medium tracking-wide text-[#b8ab95]">
                 医美管理助手
               </p>

@@ -9,13 +9,13 @@ export default function Home() {
   const upcomingCareItems = getUpcomingCareItems(mockRecords);
 
   return (
-    <section className="space-y-9">
-      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-7 shadow-[0_16px_40px_rgba(178,154,122,0.18)] ring-1 ring-white/70 sm:p-8">
+    <section className="space-y-6 sm:space-y-9">
+      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_16px_40px_rgba(178,154,122,0.18)] ring-1 ring-white/70 sm:p-8">
         <p className="text-sm font-medium text-[#9f8d74]">当前护理周期</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-800">
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
           医美管理助手
         </h1>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-3 sm:gap-4">
           <div className="rounded-2xl bg-white/48 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] ring-1 ring-white/75 backdrop-blur-sm">
             <p className="text-xs text-zinc-500/90">距离上次项目</p>
             <p className="mt-1 text-4xl font-semibold leading-none tracking-tight text-zinc-800">
@@ -36,7 +36,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-[#f8f2e9] p-5 shadow-[0_8px_20px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5]">
+      <div className="rounded-3xl bg-[#f8f2e9] p-4 shadow-[0_8px_20px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5] sm:p-5">
         <h2 className="text-lg font-semibold text-[#6f6253]">即将护理</h2>
         {upcomingCareItems.length === 0 ? (
           <p className="mt-3 text-sm text-[#8f7d67]">近期没有需要护理的项目</p>
@@ -70,16 +70,16 @@ export default function Home() {
         <RecordCard record={latestRecord} />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 pt-1 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 sm:gap-4">
         <Link
           href="/add"
-          className="rounded-2xl bg-gradient-to-r from-[#d8bfb1] via-[#cfb2a4] to-[#c8a89b] px-4 py-4.5 text-center text-base font-semibold text-white shadow-[0_14px_30px_rgba(179,149,130,0.34)] transition hover:brightness-105"
+          className="min-h-12 rounded-2xl bg-gradient-to-r from-[#d8bfb1] via-[#cfb2a4] to-[#c8a89b] px-4 py-4 text-center text-base font-semibold text-white shadow-[0_14px_30px_rgba(179,149,130,0.34)] transition hover:brightness-105"
         >
           新增记录
         </Link>
         <Link
           href="/records"
-          className="rounded-2xl bg-white/72 px-4 py-4.5 text-center text-base font-medium text-[#8f7d67] ring-1 ring-[#d9ccba] transition hover:bg-white hover:text-[#6f6253]"
+          className="min-h-12 rounded-2xl bg-white/72 px-4 py-4 text-center text-base font-medium text-[#8f7d67] ring-1 ring-[#d9ccba] transition hover:bg-white hover:text-[#6f6253]"
         >
           查看记录
         </Link>

@@ -43,9 +43,8 @@ export function RecordForm() {
     };
   }, [imagePreviewUrls]);
 
-  const handleSubmit = (event?: FormEvent<HTMLFormElement>) => {
-    event?.preventDefault();
-    console.log("submit triggered");
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
     if (!formData.projectName.trim()) {
       alert("请填写项目名称后再提交");
@@ -67,8 +66,6 @@ export function RecordForm() {
       createdAt: new Date().toISOString(),
     };
 
-    console.log(record);
-
     try {
       const raw = localStorage.getItem(RECORDS_STORAGE_KEY);
       const existing = raw ? (JSON.parse(raw) as Array<typeof record>) : [];
@@ -85,7 +82,7 @@ export function RecordForm() {
     setImageFiles([]);
     setImagePreviewUrls([]);
 
-    alert("记录已保存");
+    alert("记录添加完成");
     router.push("/records");
   };
 
@@ -108,7 +105,7 @@ export function RecordForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-[#e8ddce]"
+      className="space-y-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-[#e8ddce] sm:p-5"
     >
       <InputField
         label="项目名称"
@@ -131,7 +128,7 @@ export function RecordForm() {
       <div className="space-y-1">
         <label className="text-sm text-zinc-600">感受评分（1-5）</label>
         <select
-          className="w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2 text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
+          className="min-h-11 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2.5 text-base text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
           value={formData.rating}
           onChange={(event) =>
             setFormData((prev) => ({ ...prev, rating: event.target.value }))
@@ -159,7 +156,7 @@ export function RecordForm() {
           onChange={(event) =>
             setFormData((prev) => ({ ...prev, todayFeeling: event.target.value }))
           }
-          className="min-h-24 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2 text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
+          className="min-h-24 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2.5 text-base text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
           placeholder="今天的皮肤状态、恢复感受..."
         />
       </div>
@@ -194,7 +191,7 @@ export function RecordForm() {
                 type="button"
                 onClick={() => toggleStatusTag(tag)}
                 className={[
-                  "rounded-full px-3 py-1 text-xs transition",
+                  "min-h-9 rounded-full px-3.5 py-1.5 text-xs transition",
                   selected
                     ? "bg-[#d8c4aa] text-white"
                     : "bg-[#efe4d6] text-[#7e6f5d] hover:bg-[#e2d4c2]",
@@ -213,7 +210,7 @@ export function RecordForm() {
           accept="image/*"
           multiple
           onChange={onImageChange}
-          className="w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2 text-sm text-[#7e6f5d] file:mr-3 file:rounded-lg file:border-0 file:bg-[#d8c4aa] file:px-3 file:py-1 file:text-white"
+          className="min-h-11 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2.5 text-sm text-[#7e6f5d] file:mr-3 file:rounded-lg file:border-0 file:bg-[#d8c4aa] file:px-3 file:py-1.5 file:text-white"
         />
         {imagePreviewUrls.length > 0 ? (
           <div className="grid grid-cols-3 gap-2">
@@ -238,14 +235,13 @@ export function RecordForm() {
           onChange={(event) =>
             setFormData((prev) => ({ ...prev, note: event.target.value }))
           }
-          className="min-h-28 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2 text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
+          className="min-h-28 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2.5 text-base text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
           placeholder="记录恢复情况、注意事项..."
         />
       </div>
       <button
         type="submit"
-        onClick={() => handleSubmit()}
-        className="relative z-10 w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#d8bfb1] to-[#c8a89b] px-4 py-2.5 font-medium text-white transition hover:brightness-105"
+        className="relative z-10 min-h-12 w-full cursor-pointer rounded-xl bg-gradient-to-r from-[#d8bfb1] to-[#c8a89b] px-4 py-3 text-base font-medium text-white transition hover:brightness-105"
       >
         提交记录
       </button>
@@ -276,7 +272,7 @@ function InputField({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2 text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
+        className="min-h-11 w-full rounded-xl border border-[#e8ddce] bg-[#f8f3ec] px-3 py-2.5 text-base text-zinc-700 outline-none transition focus:border-[#cdb8a0]"
       />
     </div>
   );

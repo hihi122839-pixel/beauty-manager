@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { RecordCard } from "@/components/record-card";
 import { mockRecords, type MedicalRecord } from "@/lib/mock-data";
 
@@ -11,23 +11,56 @@ type SavedRecord = MedicalRecord & {
   createdAt?: string;
 };
 
-export default function RecordsPage() {
-  const [savedRecords, setSavedRecords] = useState<SavedRecord[]>([]);
+const EMPTY_RECORDS: SavedRecord[] = [];
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RECORDS_STORAGE_KEY);
-      if (!raw) {
-        return;
-      }
-      const parsed = JSON.parse(raw) as SavedRecord[];
-      if (Array.isArray(parsed)) {
-        setSavedRecords(parsed);
-      }
-    } catch (error) {
-      console.error("read beauty_records failed", error);
+const subscribeRecords = (onStoreChange: () => void) => {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+  const handler = (event: StorageEvent) => {
+    if (event.key === RECORDS_STORAGE_KEY) {
+      onStoreChange();
     }
-  }, []);
+  };
+  window.addEventListener("storage", handler);
+  return () => window.removeEventListener("storage", handler);
+};
+
+let cachedRaw: string | null = null;
+let cachedRecords: SavedRecord[] = EMPTY_RECORDS;
+
+const getRecordsSnapshot = (): SavedRecord[] => {
+  if (typeof window === "undefined") {
+    return EMPTY_RECORDS;
+  }
+  try {
+    const raw = window.localStorage.getItem(RECORDS_STORAGE_KEY);
+    if (raw === cachedRaw) {
+      return cachedRecords;
+    }
+    cachedRaw = raw;
+    if (!raw) {
+      cachedRecords = EMPTY_RECORDS;
+      return cachedRecords;
+    }
+    const parsed = JSON.parse(raw) as SavedRecord[];
+    cachedRecords = Array.isArray(parsed) ? parsed : EMPTY_RECORDS;
+    return cachedRecords;
+  } catch (error) {
+    console.error("read beauty_records failed", error);
+    cachedRecords = EMPTY_RECORDS;
+    return cachedRecords;
+  }
+};
+
+const getServerRecordsSnapshot = (): SavedRecord[] => EMPTY_RECORDS;
+
+export default function RecordsPage() {
+  const savedRecords = useSyncExternalStore(
+    subscribeRecords,
+    getRecordsSnapshot,
+    getServerRecordsSnapshot
+  );
 
   const sortedSaved = [...savedRecords].sort((a, b) => {
     const aTime = a.createdAt ?? a.date ?? "";
@@ -38,7 +71,7 @@ export default function RecordsPage() {
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-800">记录列表</h1>
+        <h1 className="text-xl font-semibold text-zinc-800 sm:text-2xl">记录列表</h1>
         <p className="mt-1 text-sm text-zinc-500">
           顶部展示本地新增的记录，下方为示例数据。
         </p>

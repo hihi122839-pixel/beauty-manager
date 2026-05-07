@@ -11,7 +11,7 @@ export function RecordCard({ record }: RecordCardProps) {
   const diaryStars = "★".repeat(record.satisfaction ?? 0) + "☆".repeat(5 - (record.satisfaction ?? 0));
 
   return (
-    <article className="rounded-3xl bg-white/92 p-6 shadow-[0_14px_36px_rgba(179,156,126,0.14)]">
+    <article className="w-full rounded-3xl bg-white/92 p-4 shadow-[0_14px_36px_rgba(179,156,126,0.14)] sm:p-6">
       <div className="mb-4 flex items-start justify-between gap-3">
         <h3 className="text-xl font-semibold tracking-tight text-zinc-800">
           {record.projectName}

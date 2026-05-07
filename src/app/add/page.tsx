@@ -4,9 +4,9 @@ export default function AddPage() {
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-800">新增记录</h1>
+        <h1 className="text-xl font-semibold text-zinc-800 sm:text-2xl">新增记录</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          填写本次医美项目信息，提交后会先输出到控制台。
+          填写本次医美项目信息，提交后将保存到本地。
         </p>
       </div>
       <RecordForm />

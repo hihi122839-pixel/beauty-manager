@@ -89,30 +89,30 @@ const mockRecordsByDate: Record<string, CalendarRecord[]> = {
 
 export default function CalendarPage() {
   const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const today = toDateKey(year, month, now.getDate());
-  const [selectedDate, setSelectedDate] = useState(today);
+  const todayKey = toDateKey(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [selectedDate, setSelectedDate] = useState(todayKey);
 
   const calendarDays = useMemo(() => {
-    const firstDay = new Date(year, month, 1);
+    const firstDay = new Date(viewYear, viewMonth, 1);
     const startOffset = (firstDay.getDay() + 6) % 7;
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
     const cells: Array<{ day: number; dateKey: string } | null> = [];
     for (let i = 0; i < startOffset; i++) {
       cells.push(null);
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      cells.push({ day, dateKey: toDateKey(year, month, day) });
+      cells.push({ day, dateKey: toDateKey(viewYear, viewMonth, day) });
     }
     while (cells.length % 7 !== 0) {
       cells.push(null);
     }
     return cells;
-  }, [month, year]);
+  }, [viewMonth, viewYear]);
 
-  const selectedRecords = mockRecordsByDate[selectedDate] ?? [];
   const reminderProjectsByDate = useMemo(() => {
     const reminderMap: Record<string, string[]> = {};
 
@@ -131,19 +131,73 @@ export default function CalendarPage() {
 
     return reminderMap;
   }, []);
+
+  const selectedRecords = mockRecordsByDate[selectedDate] ?? [];
   const reminderProjectsToday = reminderProjectsByDate[selectedDate] ?? [];
 
+  const goPrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewYear(viewYear - 1);
+      setViewMonth(11);
+      return;
+    }
+    setViewMonth(viewMonth - 1);
+  };
+
+  const goNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewYear(viewYear + 1);
+      setViewMonth(0);
+      return;
+    }
+    setViewMonth(viewMonth + 1);
+  };
+
+  const goToday = () => {
+    const today = new Date();
+    setViewYear(today.getFullYear());
+    setViewMonth(today.getMonth());
+    setSelectedDate(
+      toDateKey(today.getFullYear(), today.getMonth(), today.getDate())
+    );
+  };
+
   return (
-    <section className="space-y-7">
-      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-6 shadow-[0_14px_34px_rgba(178,154,122,0.16)] ring-1 ring-white/70">
+    <section className="space-y-5 sm:space-y-7">
+      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_14px_34px_rgba(178,154,122,0.16)] ring-1 ring-white/70 sm:p-6">
         <p className="text-sm font-medium text-[#9f8d74]">护理日历</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-800">
-          {year}年 {monthNames[month]}
-        </h1>
+        <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
+            {viewYear}年 {monthNames[viewMonth]}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={goPrevMonth}
+              className="min-h-9 rounded-full bg-white/75 px-3 py-1.5 text-xs font-medium text-[#7e6f5d] ring-1 ring-[#e6d8c4] transition hover:bg-white"
+            >
+              上一月
+            </button>
+            <button
+              type="button"
+              onClick={goToday}
+              className="min-h-9 rounded-full bg-[#d8c4aa] px-3 py-1.5 text-xs font-medium text-white shadow-[0_6px_14px_rgba(170,142,108,0.24)] transition hover:brightness-105"
+            >
+              回到今天
+            </button>
+            <button
+              type="button"
+              onClick={goNextMonth}
+              className="min-h-9 rounded-full bg-white/75 px-3 py-1.5 text-xs font-medium text-[#7e6f5d] ring-1 ring-[#e6d8c4] transition hover:bg-white"
+            >
+              下一月
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="rounded-3xl bg-white/88 p-5 shadow-[0_12px_30px_rgba(179,156,126,0.12)] ring-1 ring-[#ece2d5]">
-        <div className="mb-3 grid grid-cols-7 gap-2">
+      <div className="rounded-3xl bg-white/88 p-3 shadow-[0_12px_30px_rgba(179,156,126,0.12)] ring-1 ring-[#ece2d5] sm:p-5">
+        <div className="mb-2 grid grid-cols-7 gap-1.5 sm:mb-3 sm:gap-2">
           {weekDays.map((day) => (
             <p
               key={day}
@@ -154,19 +208,26 @@ export default function CalendarPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
           {calendarDays.map((cell, index) => {
             if (!cell) {
-              return <div key={`empty-${index}`} className="h-12 rounded-2xl" />;
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="h-14 rounded-xl sm:h-24 sm:rounded-2xl"
+                />
+              );
             }
 
             const records = mockRecordsByDate[cell.dateKey] ?? [];
             const hasRecord = records.length > 0;
             const reminderProjects = reminderProjectsByDate[cell.dateKey] ?? [];
             const isReminderDay = reminderProjects.length > 0;
-            const isToday = cell.dateKey === today;
+            const isToday = cell.dateKey === todayKey;
             const isSelected = cell.dateKey === selectedDate;
-            const visibleTags = records.slice(0, 3).map((item) => toShortLabel(item.projectName));
+            const visibleTags = records
+              .slice(0, 3)
+              .map((item) => toShortLabel(item.projectName));
             const extraCount = records.length - visibleTags.length;
 
             return (
@@ -175,7 +236,7 @@ export default function CalendarPage() {
                 type="button"
                 onClick={() => setSelectedDate(cell.dateKey)}
                 className={[
-                  "relative flex h-24 flex-col items-start rounded-2xl p-2 text-sm transition",
+                  "relative flex h-14 flex-col items-start rounded-xl p-1.5 text-sm transition sm:h-24 sm:rounded-2xl sm:p-2",
                   isSelected
                     ? "bg-[#f2e9dc] text-[#6f6253] ring-2 ring-[#d8c4aa]"
                     : "bg-[#f8f2e9] text-[#7e6f5d] hover:bg-[#efe4d6]",
@@ -183,19 +244,21 @@ export default function CalendarPage() {
                   isReminderDay && !isSelected ? "ring-2 ring-[#b99d7e]" : "",
                 ].join(" ")}
               >
-                <span className="mb-1 text-xs font-medium">{cell.day}</span>
+                <span className="mb-0.5 text-xs font-medium sm:mb-1">
+                  {cell.day}
+                </span>
                 {hasRecord ? (
-                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-[#b79c7f]" />
+                  <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#b79c7f] sm:right-2 sm:top-2" />
                 ) : null}
                 {isReminderDay ? (
                   <span
-                    className="absolute right-2 bottom-1.5 text-[11px] leading-none"
+                    className="absolute right-1 bottom-1 text-[10px] leading-none sm:right-2 sm:bottom-1.5 sm:text-[11px]"
                     aria-label="提醒日"
                   >
                     🔔
                   </span>
                 ) : null}
-                <div className="flex w-full flex-wrap gap-1">
+                <div className="hidden w-full flex-wrap gap-1 sm:flex">
                   {visibleTags.map((tag) => (
                     <span
                       key={tag}
@@ -228,7 +291,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-white/88 p-5 shadow-[0_12px_30px_rgba(179,156,126,0.1)] ring-1 ring-[#ece2d5]">
+      <div className="rounded-3xl bg-white/88 p-4 shadow-[0_12px_30px_rgba(179,156,126,0.1)] ring-1 ring-[#ece2d5] sm:p-5">
         <p className="text-sm font-medium text-[#9f8d74]">当日记录 · {selectedDate}</p>
         {reminderProjectsToday.length > 0 ? (
           <p className="mt-2 text-xs text-[#8f7d67]">
@@ -244,7 +307,9 @@ export default function CalendarPage() {
                 key={`${item.projectName}-${idx}`}
                 className="rounded-2xl bg-[#f8f2e9] p-4"
               >
-                <h3 className="text-lg font-semibold text-zinc-800">{item.projectName}</h3>
+                <h3 className="text-lg font-semibold text-zinc-800">
+                  {item.projectName}
+                </h3>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
                   <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
                     状态：{item.status}

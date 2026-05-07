@@ -61,6 +61,7 @@ export default function SkinPage() {
     if (savedDiary) {
       try {
         const parsed = JSON.parse(savedDiary) as typeof diary;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDiary({
           feeling: parsed.feeling ?? "",
           change: parsed.change ?? "",
@@ -170,34 +171,34 @@ export default function SkinPage() {
   };
 
   return (
-    <section className="space-y-7">
-      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-6 shadow-[0_12px_30px_rgba(178,154,122,0.15)] ring-1 ring-white/70">
+    <section className="space-y-5 sm:space-y-7">
+      <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_12px_30px_rgba(178,154,122,0.15)] ring-1 ring-white/70 sm:p-6">
         <p className="text-sm font-medium text-[#9f8d74]">皮肤状态可视化记录</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-zinc-800">
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
           皮肤问题记录
         </h1>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-3xl bg-gradient-to-b from-white/95 to-[#f7efe4] p-8 shadow-[0_12px_28px_rgba(169,143,111,0.14)] ring-1 ring-[#ece2d5]">
-          <div className="mx-auto flex min-h-[460px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-6 py-12 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)]">
-            <div className="flex w-full justify-center py-3">
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.2fr_1fr]">
+        <div className="rounded-3xl bg-gradient-to-b from-white/95 to-[#f7efe4] p-5 shadow-[0_12px_28px_rgba(169,143,111,0.14)] ring-1 ring-[#ece2d5] sm:p-8">
+          <div className="mx-auto flex min-h-[320px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-4 py-8 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)] sm:min-h-[460px] sm:px-6 sm:py-12">
+            <div className="flex w-full justify-center py-2 sm:py-3">
               <Image
                 src="/face-neutral.png"
                 alt="面部示意图"
                 width={300}
                 height={420}
-                className="h-auto w-full max-w-[300px] object-contain [mix-blend-mode:multiply]"
+                className="h-auto w-full max-w-[220px] object-contain [mix-blend-mode:multiply] sm:max-w-[300px]"
                 priority
               />
             </div>
-            <p className="mt-5 text-center text-xs tracking-[0.02em] text-[#9a8770]">
+            <p className="mt-4 text-center text-xs tracking-[0.02em] text-[#9a8770] sm:mt-5">
               用于辅助记录皮肤问题分布与变化
             </p>
           </div>
         </div>
 
-        <div className="rounded-3xl bg-white/88 p-5 shadow-[0_10px_24px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5]">
+        <div className="rounded-3xl bg-white/88 p-4 shadow-[0_10px_24px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5] sm:p-5">
           <h2 className="text-lg font-semibold text-[#6f6253]">当前记录</h2>
           <p className="mt-1 text-sm text-[#8f7d67]">日期：{today}</p>
           <div className="mt-4 rounded-2xl bg-[#f8f2e9] p-4">
@@ -239,10 +240,13 @@ export default function SkinPage() {
                 <p className="text-xs text-[#7e6f5d]">已上传：{uploadedFileName}</p>
                 {imagePreviewUrl ? (
                   <div className="mt-2 overflow-hidden rounded-lg border border-[#eadfce] bg-[#f6eee2] p-2">
-                    <img
+                    <Image
                       src={imagePreviewUrl}
                       alt="上传的皮肤测试报告预览"
-                      className="mx-auto max-h-44 w-auto rounded-md object-contain"
+                      width={320}
+                      height={176}
+                      unoptimized
+                      className="mx-auto h-auto max-h-44 w-auto rounded-md object-contain"
                     />
                   </div>
                 ) : (
@@ -348,7 +352,7 @@ export default function SkinPage() {
         </div>
       </div>
 
-      <div className="rounded-3xl bg-white/88 p-5 shadow-[0_10px_24px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5]">
+      <div className="rounded-3xl bg-white/88 p-4 shadow-[0_10px_24px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5] sm:p-5">
         <h2 className="text-lg font-semibold text-[#6f6253]">历史记录</h2>
         <div className="mt-3 space-y-3">
           {diaryHistory.map((entry) => (
