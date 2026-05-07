@@ -3,6 +3,11 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import {
+  getBeautyRecordsSnapshot,
+  writeBeautyRecords,
+  type SavedRecord,
+} from "@/lib/beauty-records";
 
 type FormState = {
   projectName: string;
@@ -29,7 +34,6 @@ const initialState: FormState = {
 };
 
 const statusOptions = ["泛红", "爆痘", "提亮", "紧致"];
-const RECORDS_STORAGE_KEY = "beauty_records";
 
 export function RecordForm() {
   const router = useRouter();
@@ -51,7 +55,7 @@ export function RecordForm() {
       return;
     }
 
-    const record = {
+    const record: SavedRecord = {
       id: `${Date.now()}`,
       projectName: formData.projectName.trim(),
       date: formData.date,
@@ -67,10 +71,8 @@ export function RecordForm() {
     };
 
     try {
-      const raw = localStorage.getItem(RECORDS_STORAGE_KEY);
-      const existing = raw ? (JSON.parse(raw) as Array<typeof record>) : [];
-      const next = Array.isArray(existing) ? [...existing, record] : [record];
-      localStorage.setItem(RECORDS_STORAGE_KEY, JSON.stringify(next));
+      const existing = getBeautyRecordsSnapshot();
+      writeBeautyRecords([...existing, record]);
     } catch (error) {
       console.error("save record failed", error);
       alert("保存失败，请稍后再试");

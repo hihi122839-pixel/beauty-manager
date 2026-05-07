@@ -1,65 +1,21 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { BackButton } from "@/components/back-button";
 import { RecordCard } from "@/components/record-card";
-import { mockRecords, type MedicalRecord } from "@/lib/mock-data";
-
-const RECORDS_STORAGE_KEY = "beauty_records";
-
-type SavedRecord = MedicalRecord & {
-  imageFileNames?: string[];
-  createdAt?: string;
-};
-
-const EMPTY_RECORDS: SavedRecord[] = [];
-
-const subscribeRecords = (onStoreChange: () => void) => {
-  if (typeof window === "undefined") {
-    return () => {};
-  }
-  const handler = (event: StorageEvent) => {
-    if (event.key === RECORDS_STORAGE_KEY) {
-      onStoreChange();
-    }
-  };
-  window.addEventListener("storage", handler);
-  return () => window.removeEventListener("storage", handler);
-};
-
-let cachedRaw: string | null = null;
-let cachedRecords: SavedRecord[] = EMPTY_RECORDS;
-
-const getRecordsSnapshot = (): SavedRecord[] => {
-  if (typeof window === "undefined") {
-    return EMPTY_RECORDS;
-  }
-  try {
-    const raw = window.localStorage.getItem(RECORDS_STORAGE_KEY);
-    if (raw === cachedRaw) {
-      return cachedRecords;
-    }
-    cachedRaw = raw;
-    if (!raw) {
-      cachedRecords = EMPTY_RECORDS;
-      return cachedRecords;
-    }
-    const parsed = JSON.parse(raw) as SavedRecord[];
-    cachedRecords = Array.isArray(parsed) ? parsed : EMPTY_RECORDS;
-    return cachedRecords;
-  } catch (error) {
-    console.error("read beauty_records failed", error);
-    cachedRecords = EMPTY_RECORDS;
-    return cachedRecords;
-  }
-};
-
-const getServerRecordsSnapshot = (): SavedRecord[] => EMPTY_RECORDS;
+import { mockRecords } from "@/lib/mock-data";
+import {
+  getBeautyRecordsSnapshot,
+  getServerBeautyRecordsSnapshot,
+  subscribeBeautyRecords,
+  writeBeautyRecords,
+} from "@/lib/beauty-records";
 
 export default function RecordsPage() {
   const savedRecords = useSyncExternalStore(
-    subscribeRecords,
-    getRecordsSnapshot,
-    getServerRecordsSnapshot
+    subscribeBeautyRecords,
+    getBeautyRecordsSnapshot,
+    getServerBeautyRecordsSnapshot
   );
 
   const sortedSaved = [...savedRecords].sort((a, b) => {
@@ -68,10 +24,19 @@ export default function RecordsPage() {
     return bTime.localeCompare(aTime);
   });
 
+  const handleDelete = (id: string) => {
+    if (!window.confirm("确定删除这条记录吗？")) {
+      return;
+    }
+
+    writeBeautyRecords(savedRecords.filter((record) => record.id !== id));
+  };
+
   return (
     <section className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-zinc-800 sm:text-2xl">记录列表</h1>
+        <BackButton />
+        <h1 className="mt-3 text-xl font-semibold text-zinc-800 sm:text-2xl">记录列表</h1>
         <p className="mt-1 text-sm text-zinc-500">
           顶部展示本地新增的记录，下方为示例数据。
         </p>
@@ -80,7 +45,7 @@ export default function RecordsPage() {
       {sortedSaved.length > 0 ? (
         <div className="space-y-3">
           {sortedSaved.map((record) => (
-            <RecordCard key={record.id} record={record} />
+            <RecordCard key={record.id} record={record} onDelete={handleDelete} />
           ))}
         </div>
       ) : (

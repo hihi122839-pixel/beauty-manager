@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { BackButton } from "@/components/back-button";
 
 type CalendarRecord = {
   projectName: string;
@@ -165,7 +166,8 @@ export default function CalendarPage() {
   return (
     <section className="space-y-5 sm:space-y-7">
       <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_14px_34px_rgba(178,154,122,0.16)] ring-1 ring-white/70 sm:p-6">
-        <p className="text-sm font-medium text-[#9f8d74]">护理日历</p>
+        <BackButton />
+        <p className="mt-3 text-sm font-medium text-[#9f8d74]">护理日历</p>
         <div className="mt-1 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
             {viewYear}年 {monthNames[viewMonth]}

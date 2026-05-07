@@ -3,9 +3,10 @@ import Image from "next/image";
 
 type RecordCardProps = {
   record: MedicalRecord;
+  onDelete?: (id: string) => void;
 };
 
-export function RecordCard({ record }: RecordCardProps) {
+export function RecordCard({ record, onDelete }: RecordCardProps) {
   const stars = "★".repeat(record.rating) + "☆".repeat(5 - record.rating);
   const status = record.rating >= 4 ? "状态佳" : "观察中";
   const diaryStars = "★".repeat(record.satisfaction ?? 0) + "☆".repeat(5 - (record.satisfaction ?? 0));
@@ -16,9 +17,20 @@ export function RecordCard({ record }: RecordCardProps) {
         <h3 className="text-xl font-semibold tracking-tight text-zinc-800">
           {record.projectName}
         </h3>
-        <span className="rounded-full bg-[#f7f1e8] px-3 py-1 text-[11px] font-medium text-[#a5947e]">
-          {record.date}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-2">
+          <span className="rounded-full bg-[#f7f1e8] px-3 py-1 text-[11px] font-medium text-[#a5947e]">
+            {record.date}
+          </span>
+          {onDelete ? (
+            <button
+              type="button"
+              onClick={() => onDelete(record.id)}
+              className="min-h-9 rounded-full bg-[#f7efe4] px-3 py-1.5 text-xs font-medium text-[#9a7562] ring-1 ring-[#eadfce] transition hover:bg-[#efe2d2] sm:min-h-0 sm:px-2.5 sm:py-1 sm:text-[11px]"
+            >
+              删除
+            </button>
+          ) : null}
+        </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <span className="rounded-full bg-[#efe6d8] px-2.5 py-1 text-[11px] font-medium text-[#8e7a63]">
