@@ -34,7 +34,26 @@ export default function Home() {
   const visibleProjectRhythms = projectRhythms.slice(0, 4);
 
   return (
-    <section className="space-y-6 sm:space-y-9">
+    <section className="relative">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 -top-12 -bottom-16 -z-10 overflow-hidden"
+      >
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(ellipse_at_top,_rgba(255,242,222,0.85),_transparent_70%)]" />
+        <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#f7e3c8]/55 blur-3xl" />
+        <div className="absolute -right-16 top-44 h-80 w-80 rounded-full bg-[#efdcc1]/55 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 h-64 w-64 rounded-full bg-[#fff2dc]/60 blur-3xl" />
+        <div
+          className="absolute inset-0 opacity-[0.05] mix-blend-multiply"
+          style={{
+            backgroundImage:
+              "radial-gradient(rgba(140,110,80,0.45) 1px, transparent 1px)",
+            backgroundSize: "14px 14px",
+          }}
+        />
+      </div>
+
+      <div className="space-y-7 sm:space-y-10">
       <div className="rounded-3xl bg-gradient-to-br from-[#fdf9f2] via-[#f8f1e7] to-[#efe4d6] p-5 shadow-[0_16px_40px_rgba(178,154,122,0.18)] ring-1 ring-white/70 sm:p-8">
         <p className="text-sm font-medium text-[#9f8d74]">当前护理周期</p>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-800 sm:text-3xl">
@@ -120,11 +139,13 @@ export default function Home() {
           查看记录
         </Link>
       </div>
+      </div>
 
       <Link
         href="/add"
         aria-label="新增记录"
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#d8bfb1] to-[#c8a89b] text-2xl font-semibold leading-none text-white shadow-[0_14px_28px_rgba(170,138,108,0.36)] transition hover:brightness-105 sm:bottom-8 sm:right-8 sm:h-12 sm:w-12 sm:text-xl sm:opacity-90 sm:hover:opacity-100"
+        className="fixed right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#d8bfb1] to-[#c8a89b] text-2xl font-semibold leading-none text-white shadow-[0_14px_28px_rgba(170,138,108,0.36)] transition hover:brightness-105 sm:right-10 sm:h-12 sm:w-12 sm:text-xl sm:opacity-90 sm:hover:opacity-100"
+        style={{ bottom: "min(88px, 33vh)" }}
       >
         +
       </Link>

@@ -9,50 +9,110 @@ const DIARY_STORAGE_KEY = "skin-diary";
 const UPLOAD_NAME_STORAGE_KEY = "skin-upload-file-name";
 const HISTORY_STORAGE_KEY = "skin-diary-history";
 const ISSUE_RECORDS_STORAGE_KEY = "skin-issue-records";
+const HISTORY_SEED_FLAG_KEY = "skin-diary-history-seeded";
 
-const mockHistory = [
-  { date: "2026-04-14", summary: "左脸泛红、鼻子毛孔" },
-  { date: "2026-04-10", summary: "额头痘痘、下巴干燥" },
-  { date: "2026-04-05", summary: "右脸暗沉、左脸毛孔" },
-];
-
-type AreaName = "额头" | "眼周" | "鼻子" | "左脸" | "右脸" | "嘴周" | "下巴";
+type AreaName =
+  | "额头"
+  | "眼周"
+  | "鼻子"
+  | "嘴周"
+  | "左脸"
+  | "右脸"
+  | "下巴"
+  | "颈部"
+  | "法令纹"
+  | "T区"
+  | "U区";
 
 const AREA_OPTIONS: AreaName[] = [
   "额头",
   "眼周",
   "鼻子",
+  "嘴周",
   "左脸",
   "右脸",
-  "嘴周",
   "下巴",
+  "颈部",
+  "法令纹",
+  "T区",
+  "U区",
 ];
 
 const ISSUE_OPTIONS = [
   "黑眼圈",
   "干纹",
+  "细纹",
   "毛孔",
+  "出油",
   "泛红",
   "爆痘",
+  "闭口",
   "干燥",
   "暗沉",
+  "色沉",
+  "敏感",
   "松弛",
+  "水肿",
+  "痘印",
+  "斑点",
+  "粗糙",
+  "屏障受损",
 ];
 
-const FACE_AREA_POSITIONS: Record<AreaName, { top: string; left: string }> = {
-  额头: { top: "18%", left: "50%" },
-  眼周: { top: "33%", left: "50%" },
-  鼻子: { top: "48%", left: "50%" },
-  左脸: { top: "52%", left: "24%" },
-  右脸: { top: "52%", left: "76%" },
-  嘴周: { top: "70%", left: "50%" },
-  下巴: { top: "85%", left: "50%" },
+type FaceOverlaySpec = {
+  side: "left" | "right";
+  labelTopPct: number;
+  pointXPct: number;
+  pointYPct: number;
 };
+
+const FACE_OVERLAY: Partial<Record<AreaName, FaceOverlaySpec>> = {
+  额头: { side: "right", labelTopPct: 6, pointXPct: 50, pointYPct: 16 },
+  眼周: { side: "left", labelTopPct: 22, pointXPct: 50, pointYPct: 30 },
+  鼻子: { side: "right", labelTopPct: 36, pointXPct: 50, pointYPct: 46 },
+  左脸: { side: "left", labelTopPct: 46, pointXPct: 39, pointYPct: 52 },
+  右脸: { side: "right", labelTopPct: 56, pointXPct: 61, pointYPct: 52 },
+  嘴周: { side: "left", labelTopPct: 66, pointXPct: 50, pointYPct: 70 },
+  下巴: { side: "right", labelTopPct: 76, pointXPct: 50, pointYPct: 84 },
+  颈部: { side: "left", labelTopPct: 90, pointXPct: 50, pointYPct: 100 },
+};
+
+type DiaryHistoryEntry = {
+  id: string;
+  date: string;
+  feeling: string;
+  change: string;
+  advice: string;
+};
+
+const SEED_HISTORY: DiaryHistoryEntry[] = [
+  {
+    id: "seed-2026-04-14",
+    date: "2026-04-14",
+    feeling: "左脸泛红，鼻翼出油偏多",
+    change: "光子嫩肤后毛孔粗糙度有所减轻",
+    advice: "继续加强保湿，避免高温环境",
+  },
+  {
+    id: "seed-2026-04-10",
+    date: "2026-04-10",
+    feeling: "额头爆痘，下巴干燥脱屑",
+    change: "更换温和洁面后红疹明显缓解",
+    advice: "建议外用医用敷料 3 天",
+  },
+  {
+    id: "seed-2026-04-05",
+    date: "2026-04-05",
+    feeling: "右脸暗沉，左脸毛孔粗大",
+    change: "水光针后皮肤通透度提升",
+    advice: "白天避免使用酸类产品",
+  },
+];
 
 type IssueRecord = { area: AreaName; issues: string[] };
 
 export default function SkinPage() {
-  const { showToast } = useToast();
+  const { showToast, confirm } = useToast();
   const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [diary, setDiary] = useState({
@@ -61,15 +121,7 @@ export default function SkinPage() {
     advice: "",
   });
   const [editingField, setEditingField] = useState<"feeling" | "change" | "advice" | null>(null);
-  const [diaryHistory, setDiaryHistory] = useState<
-    Array<{
-      id: string;
-      date: string;
-      feeling: string;
-      change: string;
-      advice: string;
-    }>
-  >([]);
+  const [diaryHistory, setDiaryHistory] = useState<DiaryHistoryEntry[]>([]);
   const [issueRecords, setIssueRecords] = useState<IssueRecord[]>([]);
   const [selectedArea, setSelectedArea] = useState<AreaName | null>(null);
   const [pickedIssues, setPickedIssues] = useState<string[]>([]);
@@ -132,6 +184,8 @@ export default function SkinPage() {
       setUploadedFileName(savedUploadName);
     }
 
+    const seededFlag = localStorage.getItem(HISTORY_SEED_FLAG_KEY) === "1";
+
     if (savedHistory) {
       try {
         const parsed = JSON.parse(savedHistory) as Array<{
@@ -157,6 +211,13 @@ export default function SkinPage() {
       } catch {
         localStorage.removeItem(HISTORY_STORAGE_KEY);
       }
+    } else if (!seededFlag) {
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(SEED_HISTORY));
+      setDiaryHistory(SEED_HISTORY);
+    }
+
+    if (!seededFlag) {
+      localStorage.setItem(HISTORY_SEED_FLAG_KEY, "1");
     }
   }, []);
 
@@ -231,6 +292,26 @@ export default function SkinPage() {
     );
   };
 
+  const handleDeleteHistoryEntry = async (id: string) => {
+    const ok = await confirm({
+      message: "确定删除这条历史记录吗？",
+      confirmLabel: "删除",
+    });
+    if (!ok) {
+      return;
+    }
+    setDiaryHistory((prev) => prev.filter((entry) => entry.id !== id));
+    showToast("已删除", "success");
+  };
+
+  const formatIssuesShort = (issues: string[]) => {
+    if (issues.length === 0) {
+      return "";
+    }
+    const visible = issues.slice(0, 2).join(" / ");
+    return issues.length > 2 ? `${visible} …` : visible;
+  };
+
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
     setUploadedFileName(file?.name ?? null);
@@ -292,34 +373,91 @@ export default function SkinPage() {
       </div>
 
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.2fr_1fr]">
-        <div className="rounded-3xl bg-gradient-to-b from-white/95 to-[#f7efe4] p-5 shadow-[0_12px_28px_rgba(169,143,111,0.14)] ring-1 ring-[#ece2d5] sm:p-8">
-          <div className="mx-auto flex min-h-[380px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-4 py-10 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)] sm:min-h-[520px] sm:px-6 sm:py-14">
-            <div className="relative w-full max-w-[280px] sm:max-w-[400px]">
-              <Image
-                src="/face-neutral.png"
-                alt="面部示意图"
-                width={420}
-                height={588}
-                className="h-auto w-full object-contain [mix-blend-mode:multiply]"
-                priority
-              />
+        <div className="rounded-3xl bg-gradient-to-b from-white/95 to-[#f7efe4] p-4 shadow-[0_12px_28px_rgba(169,143,111,0.14)] ring-1 ring-[#ece2d5] sm:p-8">
+          <div className="mx-auto flex min-h-[380px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-2 py-8 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)] sm:min-h-[520px] sm:px-6 sm:py-12">
+            <div className="relative mx-auto w-full max-w-[460px]">
+              <div className="mx-auto w-[58%] sm:w-[55%]">
+                <Image
+                  src="/face-neutral.png"
+                  alt="面部示意图"
+                  width={420}
+                  height={588}
+                  className="h-auto w-full object-contain [mix-blend-mode:multiply]"
+                  priority
+                />
+              </div>
+
+              <svg
+                className="pointer-events-none absolute inset-0 h-full w-full"
+                viewBox="0 0 100 100"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                {issueRecords.map((record) => {
+                  const overlay = FACE_OVERLAY[record.area];
+                  if (!overlay) {
+                    return null;
+                  }
+                  const labelEdgeX = overlay.side === "left" ? 30 : 70;
+                  const labelEdgeY = overlay.labelTopPct + 4;
+                  return (
+                    <g key={record.area}>
+                      <line
+                        x1={labelEdgeX}
+                        y1={labelEdgeY}
+                        x2={overlay.pointXPct}
+                        y2={overlay.pointYPct}
+                        stroke="#d6bfa3"
+                        strokeOpacity="0.75"
+                        strokeWidth="1"
+                        strokeLinecap="round"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                      <circle
+                        cx={overlay.pointXPct}
+                        cy={overlay.pointYPct}
+                        r="0.9"
+                        fill="#c8a98c"
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+
               {issueRecords.map((record) => {
-                const position = FACE_AREA_POSITIONS[record.area];
-                if (!position) {
+                const overlay = FACE_OVERLAY[record.area];
+                if (!overlay) {
                   return null;
                 }
+                const isLeft = overlay.side === "left";
+                const summary = formatIssuesShort(record.issues);
                 return (
-                  <span
+                  <div
                     key={record.area}
-                    className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-[#e6d4bf]/85 px-2 py-0.5 text-[10px] font-medium text-[#6f5742] shadow-[0_4px_10px_rgba(170,142,108,0.18)] ring-1 ring-white/70 backdrop-blur-[1px] sm:text-[11px]"
-                    style={{ top: position.top, left: position.left }}
+                    className={[
+                      "pointer-events-none absolute -translate-y-1/2 px-1",
+                      isLeft ? "left-0 text-right" : "right-0 text-left",
+                    ].join(" ")}
+                    style={{
+                      top: `${overlay.labelTopPct}%`,
+                      maxWidth: "32%",
+                    }}
                   >
-                    {record.area} · {record.issues.length}
-                  </span>
+                    <div className="inline-flex flex-col gap-0.5 rounded-2xl bg-[#fdf8f0]/95 px-2 py-1 leading-tight text-[#6f5742] shadow-[0_4px_10px_rgba(170,142,108,0.16)] ring-1 ring-white/80 backdrop-blur-[1px] sm:px-2.5">
+                      <span className="text-[10px] font-medium sm:text-[11px]">
+                        {record.area}
+                      </span>
+                      {summary ? (
+                        <span className="text-[9px] text-[#9a8770] sm:text-[10px]">
+                          {summary}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
                 );
               })}
             </div>
-            <p className="mt-4 text-center text-xs tracking-[0.02em] text-[#9a8770] sm:mt-5">
+            <p className="mt-5 text-center text-xs tracking-[0.02em] text-[#9a8770] sm:mt-6">
               用于辅助记录皮肤问题分布与变化
             </p>
           </div>
@@ -552,38 +690,50 @@ export default function SkinPage() {
 
       <div className="rounded-3xl bg-white/88 p-4 shadow-[0_10px_24px_rgba(179,156,126,0.08)] ring-1 ring-[#ece2d5] sm:p-5">
         <h2 className="text-lg font-semibold text-[#6f6253]">历史记录</h2>
-        <div className="mt-3 space-y-3">
-          {diaryHistory.map((entry) => (
-            <article
-              key={entry.id}
-              className="rounded-2xl bg-[#f8f2e9] p-4 shadow-[0_8px_18px_rgba(179,156,126,0.12)]"
-            >
-              <p className="text-xs text-[#9f8d74]">{entry.date}</p>
-              <div className="mt-2 space-y-1.5 text-sm text-[#6f6253]">
-                <p>
-                  <span className="text-[#8f7d67]">今日皮肤感受：</span>
-                  {entry.feeling}
-                </p>
-                <p>
-                  <span className="text-[#8f7d67]">医美后变化：</span>
-                  {entry.change}
-                </p>
-                <p>
-                  <span className="text-[#8f7d67]">医生建议：</span>
-                  {entry.advice}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="mt-3 space-y-2.5">
-          {mockHistory.map((entry) => (
-            <article key={entry.date} className="rounded-2xl bg-[#f8f2e9] p-3.5">
-              <p className="text-xs text-[#9f8d74]">{entry.date}</p>
-              <p className="mt-1 text-sm text-[#6f6253]">{entry.summary}</p>
-            </article>
-          ))}
-        </div>
+        {diaryHistory.length === 0 ? (
+          <p className="mt-3 text-sm text-[#8f7d67]">暂无历史记录，记录日记后会在这里显示。</p>
+        ) : (
+          <div className="mt-3 space-y-3">
+            {diaryHistory.map((entry) => (
+              <article
+                key={entry.id}
+                className="rounded-2xl bg-[#f8f2e9] p-4 shadow-[0_8px_18px_rgba(179,156,126,0.12)]"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs text-[#9f8d74]">{entry.date}</p>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteHistoryEntry(entry.id)}
+                    className="-mr-1 rounded-full px-2 py-1 text-[11px] text-[#a89479] transition hover:bg-white/70 hover:text-[#7a4a3a]"
+                    aria-label={`删除 ${entry.date} 的历史记录`}
+                  >
+                    删除
+                  </button>
+                </div>
+                <div className="mt-2 space-y-1.5 text-sm text-[#6f6253]">
+                  {entry.feeling ? (
+                    <p>
+                      <span className="text-[#8f7d67]">今日皮肤感受：</span>
+                      {entry.feeling}
+                    </p>
+                  ) : null}
+                  {entry.change ? (
+                    <p>
+                      <span className="text-[#8f7d67]">医美后变化：</span>
+                      {entry.change}
+                    </p>
+                  ) : null}
+                  {entry.advice ? (
+                    <p>
+                      <span className="text-[#8f7d67]">医生建议：</span>
+                      {entry.advice}
+                    </p>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
