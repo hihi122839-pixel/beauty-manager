@@ -7,7 +7,6 @@ const navItems = [
   { href: "/", label: "首页" },
   { href: "/calendar", label: "日历" },
   { href: "/skin", label: "皮肤" },
-  { href: "/add", label: "新增" },
   { href: "/records", label: "记录" },
 ];
 

@@ -112,20 +112,22 @@ export default function Home() {
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2 sm:gap-4">
-        <Link
-          href="/add"
-          className="min-h-12 rounded-2xl bg-gradient-to-r from-[#d8bfb1] via-[#cfb2a4] to-[#c8a89b] px-4 py-4 text-center text-base font-semibold text-white shadow-[0_14px_30px_rgba(179,149,130,0.34)] transition hover:brightness-105"
-        >
-          新增记录
-        </Link>
+      <div className="pt-1">
         <Link
           href="/records"
-          className="min-h-12 rounded-2xl bg-white/72 px-4 py-4 text-center text-base font-medium text-[#8f7d67] ring-1 ring-[#d9ccba] transition hover:bg-white hover:text-[#6f6253]"
+          className="block min-h-12 w-full rounded-2xl bg-white/72 px-4 py-4 text-center text-base font-medium text-[#8f7d67] ring-1 ring-[#d9ccba] transition hover:bg-white hover:text-[#6f6253]"
         >
           查看记录
         </Link>
       </div>
+
+      <Link
+        href="/add"
+        aria-label="新增记录"
+        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#d8bfb1] to-[#c8a89b] text-2xl font-semibold leading-none text-white shadow-[0_14px_28px_rgba(170,138,108,0.36)] transition hover:brightness-105 sm:bottom-8 sm:right-8 sm:h-12 sm:w-12 sm:text-xl sm:opacity-90 sm:hover:opacity-100"
+      >
+        +
+      </Link>
     </section>
   );
 }
