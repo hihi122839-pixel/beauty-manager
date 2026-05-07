@@ -183,14 +183,14 @@ export default function SkinPage() {
 
       <div className="grid gap-4 sm:gap-5 lg:grid-cols-[1.2fr_1fr]">
         <div className="rounded-3xl bg-gradient-to-b from-white/95 to-[#f7efe4] p-5 shadow-[0_12px_28px_rgba(169,143,111,0.14)] ring-1 ring-[#ece2d5] sm:p-8">
-          <div className="mx-auto flex min-h-[320px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-4 py-8 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)] sm:min-h-[460px] sm:px-6 sm:py-12">
+          <div className="mx-auto flex min-h-[380px] flex-col items-center justify-center rounded-[2rem] bg-gradient-to-b from-[#fbf5ec] via-[#f8f1e7] to-[#f4eadc] px-4 py-10 shadow-[inset_0_1px_10px_rgba(255,255,255,0.9),0_18px_36px_rgba(177,152,120,0.14)] sm:min-h-[520px] sm:px-6 sm:py-14">
             <div className="flex w-full justify-center py-2 sm:py-3">
               <Image
                 src="/face-neutral.png"
                 alt="面部示意图"
-                width={300}
-                height={420}
-                className="h-auto w-full max-w-[220px] object-contain [mix-blend-mode:multiply] sm:max-w-[300px]"
+                width={420}
+                height={588}
+                className="h-auto w-full max-w-[280px] object-contain [mix-blend-mode:multiply] sm:max-w-[400px]"
                 priority
               />
             </div>

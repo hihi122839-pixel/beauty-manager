@@ -1,14 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { BackButton } from "@/components/back-button";
-
-type CalendarRecord = {
-  projectName: string;
-  status: "恢复期" | "稳定期";
-  hasReminder: boolean;
-  nextReminderDate: string;
-};
+import {
+  getBeautyRecordsSnapshot,
+  getServerBeautyRecordsSnapshot,
+  subscribeBeautyRecords,
+  type SavedRecord,
+} from "@/lib/beauty-records";
 
 const monthNames = [
   "1月",
@@ -27,74 +26,47 @@ const monthNames = [
 
 const weekDays = ["一", "二", "三", "四", "五", "六", "日"];
 
-const mockRecordsByDate: Record<string, CalendarRecord[]> = {
-  "2026-04-02": [
-    {
-      projectName: "水光针",
-      status: "恢复期",
-      hasReminder: true,
-      nextReminderDate: "2026-04-20",
-    },
-  ],
-  "2026-04-09": [
-    {
-      projectName: "肉毒除皱",
-      status: "稳定期",
-      hasReminder: true,
-      nextReminderDate: "2026-05-09",
-    },
-  ],
-  "2026-04-17": [
-    {
-      projectName: "光子嫩肤",
-      status: "恢复期",
-      hasReminder: false,
-      nextReminderDate: "2026-05-17",
-    },
-  ],
-  "2026-04-22": [
-    {
-      projectName: "皮肤管理",
-      status: "稳定期",
-      hasReminder: true,
-      nextReminderDate: "2026-04-28",
-    },
-  ],
-  "2026-04-26": [
-    {
-      projectName: "水光针",
-      status: "恢复期",
-      hasReminder: true,
-      nextReminderDate: "2026-05-26",
-    },
-    {
-      projectName: "光子嫩肤",
-      status: "稳定期",
-      hasReminder: false,
-      nextReminderDate: "2026-06-05",
-    },
-    {
-      projectName: "热玛吉",
-      status: "恢复期",
-      hasReminder: true,
-      nextReminderDate: "2026-06-26",
-    },
-    {
-      projectName: "皮肤测试",
-      status: "稳定期",
-      hasReminder: false,
-      nextReminderDate: "2026-05-12",
-    },
-  ],
-};
+const MAX_VISIBLE_TAGS = 2;
 
 export default function CalendarPage() {
+  const records = useSyncExternalStore(
+    subscribeBeautyRecords,
+    getBeautyRecordsSnapshot,
+    getServerBeautyRecordsSnapshot
+  );
+
   const now = new Date();
   const todayKey = toDateKey(now.getFullYear(), now.getMonth(), now.getDate());
 
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
   const [selectedDate, setSelectedDate] = useState(todayKey);
+
+  const recordsByDate = useMemo(() => {
+    const map: Record<string, SavedRecord[]> = {};
+    for (const record of records) {
+      if (!record.date) {
+        continue;
+      }
+      map[record.date] = map[record.date]
+        ? [...map[record.date], record]
+        : [record];
+    }
+    return map;
+  }, [records]);
+
+  const reminderProjectsByDate = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const record of records) {
+      if (!record.nextReminderDate || !record.projectName) {
+        continue;
+      }
+      map[record.nextReminderDate] = map[record.nextReminderDate]
+        ? [...map[record.nextReminderDate], record.projectName]
+        : [record.projectName];
+    }
+    return map;
+  }, [records]);
 
   const calendarDays = useMemo(() => {
     const firstDay = new Date(viewYear, viewMonth, 1);
@@ -114,26 +86,7 @@ export default function CalendarPage() {
     return cells;
   }, [viewMonth, viewYear]);
 
-  const reminderProjectsByDate = useMemo(() => {
-    const reminderMap: Record<string, string[]> = {};
-
-    for (const records of Object.values(mockRecordsByDate)) {
-      for (const record of records) {
-        if (!record.hasReminder) {
-          continue;
-        }
-
-        const dateKey = record.nextReminderDate;
-        reminderMap[dateKey] = reminderMap[dateKey]
-          ? [...reminderMap[dateKey], record.projectName]
-          : [record.projectName];
-      }
-    }
-
-    return reminderMap;
-  }, []);
-
-  const selectedRecords = mockRecordsByDate[selectedDate] ?? [];
+  const selectedRecords = recordsByDate[selectedDate] ?? [];
   const reminderProjectsToday = reminderProjectsByDate[selectedDate] ?? [];
 
   const goPrevMonth = () => {
@@ -221,16 +174,16 @@ export default function CalendarPage() {
               );
             }
 
-            const records = mockRecordsByDate[cell.dateKey] ?? [];
-            const hasRecord = records.length > 0;
+            const cellRecords = recordsByDate[cell.dateKey] ?? [];
+            const hasRecord = cellRecords.length > 0;
             const reminderProjects = reminderProjectsByDate[cell.dateKey] ?? [];
             const isReminderDay = reminderProjects.length > 0;
             const isToday = cell.dateKey === todayKey;
             const isSelected = cell.dateKey === selectedDate;
-            const visibleTags = records
-              .slice(0, 3)
+            const visibleTags = cellRecords
+              .slice(0, MAX_VISIBLE_TAGS)
               .map((item) => toShortLabel(item.projectName));
-            const extraCount = records.length - visibleTags.length;
+            const extraCount = cellRecords.length - visibleTags.length;
 
             return (
               <button
@@ -261,9 +214,9 @@ export default function CalendarPage() {
                   </span>
                 ) : null}
                 <div className="hidden w-full flex-wrap gap-1 sm:flex">
-                  {visibleTags.map((tag) => (
+                  {visibleTags.map((tag, tagIdx) => (
                     <span
-                      key={tag}
+                      key={`${tag}-${tagIdx}`}
                       className={[
                         "rounded-full px-1.5 py-0.5 text-[10px] leading-none",
                         isSelected
@@ -304,25 +257,43 @@ export default function CalendarPage() {
           <p className="mt-3 text-sm text-zinc-500">当日暂无护理记录。</p>
         ) : (
           <div className="mt-3 space-y-3">
-            {selectedRecords.map((item, idx) => (
+            {selectedRecords.map((item) => (
               <article
-                key={`${item.projectName}-${idx}`}
+                key={item.id}
                 className="rounded-2xl bg-[#f8f2e9] p-4"
               >
                 <h3 className="text-lg font-semibold text-zinc-800">
                   {item.projectName}
                 </h3>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
-                    状态：{item.status}
-                  </span>
-                  <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
-                    提醒：{item.hasReminder ? "有提醒" : "无提醒"}
-                  </span>
-                  <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
-                    下次：{item.nextReminderDate}
-                  </span>
+                  {item.area ? (
+                    <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
+                      部位：{item.area}
+                    </span>
+                  ) : null}
+                  {item.nextReminderDate ? (
+                    <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
+                      下次：{item.nextReminderDate}
+                    </span>
+                  ) : null}
+                  {item.satisfaction ? (
+                    <span className="rounded-full bg-[#efe4d6] px-2.5 py-1 text-[#7e6f5d]">
+                      满意度：{item.satisfaction}/5
+                    </span>
+                  ) : null}
                 </div>
+                {item.statusTags && item.statusTags.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {item.statusTags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-full bg-[#fcf7ef] px-2.5 py-1 text-[11px] text-[#7e6f5d] ring-1 ring-[#eadfce]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </article>
             ))}
           </div>

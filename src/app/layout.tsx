@@ -36,7 +36,7 @@ export default function RootLayout({
           <RecordsHydrator />
           <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 py-4 sm:px-6 sm:py-8">
             <header className="mb-4 sm:mb-8">
-              <div className="flex justify-end sm:justify-end">
+              <div className="flex justify-center sm:justify-end">
                 <TopNav />
               </div>
             </header>
