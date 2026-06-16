@@ -47,6 +47,20 @@ export function toDateKey(date: Date) {
   return `${date.getFullYear()}-${m}-${d}`;
 }
 
+export function addDaysToDateKey(dateKey: string, days: number) {
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + days);
+  return toDateKey(date);
+}
+
+export function calcReminderDate(projectDate: string, cycleDays: number) {
+  if (!projectDate || !cycleDays || cycleDays <= 0 || Number.isNaN(cycleDays)) {
+    return "";
+  }
+  return addDaysToDateKey(projectDate, cycleDays);
+}
+
 export function formatCost(cost?: number) {
   if (cost === undefined || cost === null || Number.isNaN(cost)) {
     return "";

@@ -2,18 +2,101 @@ import { toDateKey } from "@/lib/constants";
 
 export const RECORDS_STORAGE_KEY = "beauty_records";
 export const RECORDS_UPDATED_EVENT = "beauty-records-updated";
-export const PROFILE_STORAGE_KEY = "beautylog_profile";
+export const PROFILE_STORAGE_KEY = "beauty_profile";
+const LEGACY_PROFILE_STORAGE_KEY = "beautylog_profile";
 export const PROFILE_UPDATED_EVENT = "beautylog-profile-updated";
 
 export type UserProfile = {
-  displayName: string;
-  moodSignature: string;
+  name: string;
+  mood: string;
+  avatar: string;
 };
 
 const DEFAULT_PROFILE: UserProfile = {
-  displayName: "美丽记录者",
-  moodSignature: "坚持记录，慢慢变美。",
+  name: "Beautylog 用户",
+  mood: "坚持记录，慢慢变美。",
+  avatar: "",
 };
+
+let cachedProfile: UserProfile = DEFAULT_PROFILE;
+let cachedProfileRaw = "";
+
+function normalizeProfile(parsed: unknown): UserProfile {
+  if (!parsed || typeof parsed !== "object") {
+    return DEFAULT_PROFILE;
+  }
+
+  const data = parsed as Record<string, unknown>;
+  const name = String(data.name ?? data.displayName ?? DEFAULT_PROFILE.name).trim();
+  const mood = String(data.mood ?? data.moodSignature ?? DEFAULT_PROFILE.mood).trim();
+  const avatar = String(data.avatar ?? "").trim();
+
+  const profile = {
+    name: name || DEFAULT_PROFILE.name,
+    mood: mood || DEFAULT_PROFILE.mood,
+    avatar,
+  };
+
+  if (
+    profile.name === DEFAULT_PROFILE.name &&
+    profile.mood === DEFAULT_PROFILE.mood &&
+    profile.avatar === DEFAULT_PROFILE.avatar
+  ) {
+    return DEFAULT_PROFILE;
+  }
+
+  return profile;
+}
+
+function readProfileRaw(): string {
+  try {
+    let raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
+    if (raw) {
+      return raw;
+    }
+
+    const legacyRaw = window.localStorage.getItem(LEGACY_PROFILE_STORAGE_KEY);
+    if (!legacyRaw) {
+      return "";
+    }
+
+    const normalized = normalizeProfile(JSON.parse(legacyRaw));
+    raw = JSON.stringify(normalized);
+    try {
+      window.localStorage.setItem(PROFILE_STORAGE_KEY, raw);
+    } catch {
+      // ignore migration write errors
+    }
+    return raw;
+  } catch {
+    return "";
+  }
+}
+
+function updateProfileCache(profile: UserProfile, raw: string): UserProfile {
+  if (raw === cachedProfileRaw) {
+    return cachedProfile;
+  }
+
+  cachedProfileRaw = raw;
+
+  if (!raw) {
+    cachedProfile = DEFAULT_PROFILE;
+    return cachedProfile;
+  }
+
+  if (profile === DEFAULT_PROFILE) {
+    cachedProfile = DEFAULT_PROFILE;
+    return cachedProfile;
+  }
+
+  cachedProfile = {
+    name: profile.name,
+    mood: profile.mood,
+    avatar: profile.avatar,
+  };
+  return cachedProfile;
+}
 
 export type SavedRecord = {
   id: string;
@@ -26,6 +109,8 @@ export type SavedRecord = {
   experience?: string;
   effectEvaluation?: string;
   satisfaction?: number;
+  cycleDays?: number;
+  reminderDate?: string;
   nextReminderDate?: string;
   area?: string;
   rating?: number;
@@ -42,9 +127,14 @@ const EMPTY_RECORDS: SavedRecord[] = [];
 let cachedRaw: string | null = null;
 let cachedRecords: SavedRecord[] = EMPTY_RECORDS;
 
+export function generateRecordId() {
+  return `${Date.now()}${Math.random().toString(36).slice(2)}`;
+}
+
 export function migrateRecord(record: SavedRecord): SavedRecord {
   return {
     ...record,
+    id: record.id?.trim() ? record.id : generateRecordId(),
     experience: record.experience ?? record.todayFeeling ?? "",
     effectEvaluation: record.effectEvaluation ?? record.note ?? "",
     satisfaction: record.satisfaction ?? record.rating ?? undefined,
@@ -52,7 +142,14 @@ export function migrateRecord(record: SavedRecord): SavedRecord {
     hospital: record.hospital ?? "",
     doctor: record.doctor ?? "",
     projectTag: record.projectTag ?? inferProjectTag(record.projectName),
+    reminderDate: record.reminderDate ?? record.nextReminderDate ?? undefined,
+    nextReminderDate: record.reminderDate ?? record.nextReminderDate ?? undefined,
+    cycleDays: record.cycleDays ?? undefined,
   };
+}
+
+export function getRecordReminderDate(record: SavedRecord) {
+  return record.reminderDate ?? record.nextReminderDate;
 }
 
 function inferProjectTag(projectName: string) {
@@ -130,6 +227,23 @@ export const writeBeautyRecords = (records: SavedRecord[]) => {
   window.dispatchEvent(new Event(RECORDS_UPDATED_EVENT));
 };
 
+export function updateBeautyRecord(id: string, updates: Partial<SavedRecord>) {
+  const records = getBeautyRecordsSnapshot();
+  const next = records.map((record) =>
+    record.id === id ? migrateRecord({ ...record, ...updates, id }) : record
+  );
+  writeBeautyRecords(next);
+}
+
+export function deleteBeautyRecord(id: string) {
+  const records = getBeautyRecordsSnapshot();
+  writeBeautyRecords(records.filter((record) => record.id !== id));
+}
+
+export function getBeautyRecordById(id: string) {
+  return getBeautyRecordsSnapshot().find((record) => record.id === id) ?? null;
+}
+
 export function sortRecordsByDate(records: SavedRecord[]) {
   return records
     .filter((record) => record.projectName && record.date)
@@ -166,17 +280,20 @@ export function getUpcomingReminders(records: SavedRecord[], withinDays = 30) {
   const endKey = toDateKey(end);
 
   return records
-    .filter(
-      (record) =>
-        record.nextReminderDate &&
-        record.nextReminderDate >= today &&
-        record.nextReminderDate <= endKey
-    )
-    .map((record) => ({
-      projectName: record.projectName,
-      reminderDate: record.nextReminderDate!,
-      daysLeft: getDaysUntil(record.nextReminderDate!),
-    }))
+    .map((record) => {
+      const reminderDate = getRecordReminderDate(record);
+      if (!reminderDate || reminderDate < today || reminderDate > endKey) {
+        return null;
+      }
+      return {
+        id: record.id,
+        projectName: record.projectName,
+        reminderDate,
+        daysLeft: getDaysUntil(reminderDate),
+        cycleDays: record.cycleDays,
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => a.reminderDate.localeCompare(b.reminderDate));
 }
 
@@ -184,24 +301,38 @@ export function getProfileSnapshot(): UserProfile {
   if (typeof window === "undefined") {
     return DEFAULT_PROFILE;
   }
+
+  const raw = readProfileRaw();
+  if (raw === cachedProfileRaw) {
+    return cachedProfile;
+  }
+
   try {
-    const raw = window.localStorage.getItem(PROFILE_STORAGE_KEY);
-    if (!raw) {
-      return DEFAULT_PROFILE;
-    }
-    const parsed = JSON.parse(raw) as Partial<UserProfile>;
-    return {
-      displayName: parsed.displayName ?? DEFAULT_PROFILE.displayName,
-      moodSignature: parsed.moodSignature ?? DEFAULT_PROFILE.moodSignature,
-    };
+    const profile = raw ? normalizeProfile(JSON.parse(raw)) : DEFAULT_PROFILE;
+    return updateProfileCache(profile, raw);
   } catch {
-    return DEFAULT_PROFILE;
+    return updateProfileCache(DEFAULT_PROFILE, raw);
   }
 }
 
-export function writeProfile(profile: UserProfile) {
-  window.localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
-  window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
+export function writeProfile(profile: Partial<UserProfile>) {
+  const safe: UserProfile = {
+    name: profile.name?.trim() || DEFAULT_PROFILE.name,
+    mood: profile.mood?.trim() || DEFAULT_PROFILE.mood,
+    avatar: profile.avatar?.trim() ?? "",
+  };
+
+  const normalized = normalizeProfile(safe);
+  const raw = JSON.stringify(safe);
+
+  try {
+    window.localStorage.setItem(PROFILE_STORAGE_KEY, raw);
+    updateProfileCache(normalized, raw);
+    window.dispatchEvent(new Event(PROFILE_UPDATED_EVENT));
+  } catch (error) {
+    console.error("write profile failed", error);
+    throw error;
+  }
 }
 
 export const subscribeProfile = (onStoreChange: () => void) => {
@@ -210,7 +341,7 @@ export const subscribeProfile = (onStoreChange: () => void) => {
   }
 
   const storageHandler = (event: StorageEvent) => {
-    if (event.key === PROFILE_STORAGE_KEY) {
+    if (event.key === PROFILE_STORAGE_KEY || event.key === LEGACY_PROFILE_STORAGE_KEY) {
       onStoreChange();
     }
   };

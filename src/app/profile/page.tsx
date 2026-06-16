@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { FormEvent, useMemo, useState, useSyncExternalStore } from "react";
 import { formatCost } from "@/lib/constants";
 import {
   getBeautyRecordsSnapshot,
@@ -13,8 +13,11 @@ import {
   writeProfile,
   type UserProfile,
 } from "@/lib/beauty-records";
+import { useToast } from "@/components/toast-provider";
 
 export default function ProfilePage() {
+  const { showToast } = useToast();
+
   const records = useSyncExternalStore(
     subscribeBeautyRecords,
     getBeautyRecordsSnapshot,
@@ -31,18 +34,31 @@ export default function ProfilePage() {
   const editing = draft !== null;
 
   const stats = useMemo(() => getStats(records), [records]);
-  const initial = profile.displayName.charAt(0) || "美";
+  const initial = profile.name.charAt(0) || "美";
 
   const startEditing = () => {
     setDraft({ ...profile });
   };
 
-  const saveProfile = () => {
+  const handleSaveProfile = (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
+
     if (!draft) {
       return;
     }
-    writeProfile(draft);
-    setDraft(null);
+
+    try {
+      writeProfile({
+        name: draft.name,
+        mood: draft.mood,
+        avatar: draft.avatar,
+      });
+      setDraft(null);
+      showToast("资料已保存", "success");
+    } catch (error) {
+      console.error("save profile failed", error);
+      showToast("保存失败，请稍后再试", "error");
+    }
   };
 
   return (
@@ -53,41 +69,41 @@ export default function ProfilePage() {
         </div>
 
         {editing && draft ? (
-          <div className="mt-4 w-full max-w-xs space-y-3">
+          <form
+            onSubmit={handleSaveProfile}
+            className="mt-4 w-full max-w-xs space-y-3"
+          >
             <input
-              value={draft.displayName}
+              value={draft.name}
               onChange={(event) =>
                 setDraft((prev) =>
-                  prev ? { ...prev, displayName: event.target.value } : prev
+                  prev ? { ...prev, name: event.target.value } : prev
                 )
               }
               className="w-full rounded-2xl bg-white/80 px-4 py-2.5 text-center text-sm text-[#5A4636] ring-1 ring-[#e8ddd0] outline-none"
               placeholder="账户名"
             />
             <input
-              value={draft.moodSignature}
+              value={draft.mood}
               onChange={(event) =>
                 setDraft((prev) =>
-                  prev ? { ...prev, moodSignature: event.target.value } : prev
+                  prev ? { ...prev, mood: event.target.value } : prev
                 )
               }
               className="w-full rounded-2xl bg-white/80 px-4 py-2.5 text-center text-sm text-[#5A4636] ring-1 ring-[#e8ddd0] outline-none"
               placeholder="心情签名"
             />
             <button
-              type="button"
-              onClick={saveProfile}
+              type="submit"
               className="w-full rounded-2xl bg-[#B88762] py-2.5 text-sm font-medium text-white"
             >
               保存
             </button>
-          </div>
+          </form>
         ) : (
           <>
-            <h1 className="mt-4 text-xl font-semibold text-[#5A4636]">
-              {profile.displayName}
-            </h1>
-            <p className="mt-1.5 text-sm text-[#5A4636]/55">{profile.moodSignature}</p>
+            <h1 className="mt-4 text-xl font-semibold text-[#5A4636]">{profile.name}</h1>
+            <p className="mt-1.5 text-sm text-[#5A4636]/55">{profile.mood}</p>
             <button
               type="button"
               onClick={startEditing}

@@ -5,6 +5,7 @@ import { FlowerRating } from "@/components/flower-rating";
 import { formatCost, toShortLabel } from "@/lib/constants";
 import {
   getBeautyRecordsSnapshot,
+  getRecordReminderDate,
   getServerBeautyRecordsSnapshot,
   getUpcomingReminders,
   subscribeBeautyRecords,
@@ -53,6 +54,19 @@ export default function CalendarPage() {
     return map;
   }, [records]);
 
+  const remindersByDate = useMemo(() => {
+    const map: Record<string, Array<{ id: string; projectName: string }>> = {};
+    for (const record of records) {
+      const reminderDate = getRecordReminderDate(record);
+      if (!reminderDate) {
+        continue;
+      }
+      const entry = { id: record.id, projectName: record.projectName };
+      map[reminderDate] = map[reminderDate] ? [...map[reminderDate], entry] : [entry];
+    }
+    return map;
+  }, [records]);
+
   const upcoming = useMemo(() => getUpcomingReminders(records, 30), [records]);
 
   const calendarDays = useMemo(() => {
@@ -74,6 +88,7 @@ export default function CalendarPage() {
   }, [viewMonth, viewYear]);
 
   const selectedRecords = recordsByDate[selectedDate] ?? [];
+  const selectedReminders = remindersByDate[selectedDate] ?? [];
 
   const goPrevMonth = () => {
     if (viewMonth === 0) {
@@ -134,8 +149,28 @@ export default function CalendarPage() {
             }
 
             const cellRecords = recordsByDate[cell.dateKey] ?? [];
+            const cellReminders = remindersByDate[cell.dateKey] ?? [];
             const isToday = cell.dateKey === todayKey;
             const isSelected = cell.dateKey === selectedDate;
+
+            const cellTags: Array<{ key: string; label: string; kind: "record" | "reminder" }> =
+              [];
+            for (const item of cellRecords) {
+              cellTags.push({
+                key: `r-${item.id}`,
+                label: toShortLabel(item.projectName),
+                kind: "record",
+              });
+            }
+            for (const item of cellReminders) {
+              cellTags.push({
+                key: `m-${item.id}`,
+                label: toShortLabel(item.projectName),
+                kind: "reminder",
+              });
+            }
+            const visibleTags = cellTags.slice(0, 2);
+            const extraCount = cellTags.length - visibleTags.length;
 
             return (
               <button
@@ -152,14 +187,17 @@ export default function CalendarPage() {
               >
                 <span className="text-xs font-medium text-[#5A4636]">{cell.day}</span>
                 <div className="mt-0.5 w-full space-y-0.5 overflow-hidden">
-                  {cellRecords.slice(0, 2).map((item) => (
+                  {visibleTags.map((tag) => (
                     <p
-                      key={item.id}
+                      key={tag.key}
                       className="truncate text-[9px] leading-tight text-[#B88762]"
                     >
-                      ●{toShortLabel(item.projectName)}
+                      {tag.kind === "reminder" ? `✿ ${tag.label}` : `●${tag.label}`}
                     </p>
                   ))}
+                  {extraCount > 0 ? (
+                    <p className="text-[9px] leading-tight text-[#5A4636]/45">+{extraCount}</p>
+                  ) : null}
                 </div>
               </button>
             );
@@ -171,7 +209,7 @@ export default function CalendarPage() {
         <p className="text-sm font-medium text-[#5A4636]/70">
           {selectedDate.replace(/-/g, ".")} 的项目
         </p>
-        {selectedRecords.length === 0 ? (
+        {selectedRecords.length === 0 && selectedReminders.length === 0 ? (
           <p className="mt-3 text-sm text-[#5A4636]/45">当日暂无记录</p>
         ) : (
           <div className="mt-3 space-y-3">
@@ -198,6 +236,15 @@ export default function CalendarPage() {
                 ) : null}
               </article>
             ))}
+            {selectedReminders.map((item) => (
+              <article
+                key={`reminder-${item.id}`}
+                className="rounded-2xl bg-[#f3ebe3] p-3.5 ring-1 ring-[#e8ddd0]/80"
+              >
+                <p className="text-xs text-[#B88762]">✿ 提醒</p>
+                <h3 className="mt-1 font-semibold text-[#5A4636]">{item.projectName}</h3>
+              </article>
+            ))}
           </div>
         )}
       </div>
@@ -210,20 +257,16 @@ export default function CalendarPage() {
           <div className="mt-3 space-y-2.5">
             {upcoming.map((item) => (
               <div
-                key={`${item.projectName}-${item.reminderDate}`}
-                className="flex items-center justify-between rounded-2xl bg-[#F7F2EA] px-3.5 py-3"
+                key={item.id}
+                className="rounded-2xl bg-[#F7F2EA] px-3.5 py-3"
               >
-                <div>
-                  <p className="text-sm font-medium text-[#5A4636]">
-                    {item.projectName}
-                  </p>
-                  <p className="mt-0.5 text-xs text-[#5A4636]/50">
-                    {item.reminderDate.replace(/-/g, ".")}
-                  </p>
-                </div>
-                <span className="text-sm font-semibold text-[#B88762]">
-                  还有{item.daysLeft}天
-                </span>
+                <p className="text-sm font-medium text-[#5A4636]">{item.projectName}</p>
+                <p className="mt-0.5 text-xs text-[#5A4636]/50">
+                  {item.reminderDate.replace(/-/g, ".")} · 还有 {item.daysLeft} 天
+                </p>
+                {item.cycleDays ? (
+                  <p className="mt-0.5 text-xs text-[#5A4636]/40">周期 {item.cycleDays} 天</p>
+                ) : null}
               </div>
             ))}
           </div>

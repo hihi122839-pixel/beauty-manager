@@ -6,7 +6,7 @@ import {
   writeBeautyRecords,
   type SavedRecord,
 } from "@/lib/beauty-records";
-import { PROJECT_TAGS, toDateKey, type ProjectTag } from "@/lib/constants";
+import { PROJECT_TAGS, calcReminderDate, toDateKey, type ProjectTag } from "@/lib/constants";
 import { FlowerRating } from "@/components/flower-rating";
 import { useToast } from "@/components/toast-provider";
 
@@ -18,6 +18,9 @@ type RecordSheetProps = {
 type FormState = {
   projectName: string;
   projectTag: ProjectTag | "";
+  date: string;
+  cycleDays: string;
+  reminderDate: string;
   cost: string;
   hospital: string;
   doctor: string;
@@ -29,6 +32,9 @@ type FormState = {
 const initialState = (): FormState => ({
   projectName: "",
   projectTag: "",
+  date: toDateKey(new Date()),
+  cycleDays: "",
+  reminderDate: "",
   cost: "",
   hospital: "",
   doctor: "",
@@ -52,6 +58,11 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
     };
   }, [open]);
 
+  const handleClose = () => {
+    setFormData(initialState());
+    onClose();
+  };
+
   if (!open) {
     return null;
   }
@@ -64,6 +75,34 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
     }));
   };
 
+  const handleDateChange = (date: string) => {
+    setFormData((prev) => {
+      const next = { ...prev, date };
+      const days = Number(prev.cycleDays);
+      if (days > 0) {
+        next.reminderDate = calcReminderDate(date, days);
+      }
+      return next;
+    });
+  };
+
+  const handleCycleDaysChange = (cycleDays: string) => {
+    setFormData((prev) => {
+      const next = { ...prev, cycleDays };
+      const days = Number(cycleDays);
+      if (days > 0 && prev.date) {
+        next.reminderDate = calcReminderDate(prev.date, days);
+      } else if (!cycleDays) {
+        next.reminderDate = "";
+      }
+      return next;
+    });
+  };
+
+  const handleReminderDateChange = (reminderDate: string) => {
+    setFormData((prev) => ({ ...prev, reminderDate }));
+  };
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -74,13 +113,19 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
     }
 
     const cost = formData.cost ? Number(formData.cost) : undefined;
-    const today = toDateKey(new Date());
+    const cycleDays = formData.cycleDays ? Number(formData.cycleDays) : undefined;
 
     const record: SavedRecord = {
       id: `${Date.now()}`,
       projectName: name,
       projectTag: formData.projectTag || undefined,
-      date: today,
+      date: formData.date,
+      cycleDays:
+        cycleDays !== undefined && !Number.isNaN(cycleDays) && cycleDays > 0
+          ? cycleDays
+          : undefined,
+      reminderDate: formData.reminderDate || undefined,
+      nextReminderDate: formData.reminderDate || undefined,
       cost: cost && !Number.isNaN(cost) ? cost : undefined,
       hospital: formData.hospital.trim(),
       doctor: formData.doctor.trim(),
@@ -109,7 +154,7 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
       className="fixed inset-0 z-50 flex items-end justify-center bg-[#3a2c1f]/25 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-t-[1.75rem] bg-[#F7F2EA] px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-4 shadow-[0_-12px_40px_rgba(90,70,54,0.15)]"
@@ -121,7 +166,7 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
           <h2 className="text-lg font-semibold text-[#5A4636]">记录今天</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleClose}
             className="rounded-full px-3 py-1 text-sm text-[#5A4636]/60 transition hover:bg-white/60"
           >
             关闭
@@ -159,6 +204,27 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
             onChange={(value) => setFormData((prev) => ({ ...prev, projectName: value }))}
             placeholder="例如：光子嫩肤"
           />
+          <Field
+            label="项目日期"
+            type="date"
+            value={formData.date}
+            onChange={handleDateChange}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="复做周期（天）"
+              type="number"
+              value={formData.cycleDays}
+              onChange={handleCycleDaysChange}
+              placeholder="例如 35"
+            />
+            <Field
+              label="下次提醒日期"
+              type="date"
+              value={formData.reminderDate}
+              onChange={handleReminderDateChange}
+            />
+          </div>
           <Field
             label="费用"
             type="number"
@@ -238,7 +304,7 @@ type FieldProps = {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  type?: "text" | "number";
+  type?: "text" | "number" | "date";
 };
 
 function Field({ label, value, onChange, placeholder, type = "text" }: FieldProps) {

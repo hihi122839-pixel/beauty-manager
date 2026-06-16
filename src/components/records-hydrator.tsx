@@ -11,6 +11,7 @@ import {
 
 const SEED_FLAG_KEY = "beauty_records_seeded";
 const MIGRATION_FLAG_KEY = "beauty_records_migrated_v2";
+const ID_MIGRATION_FLAG_KEY = "beauty_records_migrated_v3";
 
 const buildSeedRecords = (): SavedRecord[] =>
   mockRecords.map((record) => ({
@@ -45,6 +46,22 @@ export function RecordsHydrator() {
         console.error("migrate beauty_records failed", error);
       }
       window.localStorage.setItem(MIGRATION_FLAG_KEY, "1");
+    }
+
+    const hasIdMigrated = window.localStorage.getItem(ID_MIGRATION_FLAG_KEY) === "1";
+    if (!hasIdMigrated && existingRaw) {
+      try {
+        const parsed = JSON.parse(existingRaw) as SavedRecord[];
+        if (Array.isArray(parsed)) {
+          const needsId = parsed.some((record) => !record?.id?.trim());
+          if (needsId) {
+            writeBeautyRecords(migrateRecords(parsed));
+          }
+        }
+      } catch (error) {
+        console.error("migrate record ids failed", error);
+      }
+      window.localStorage.setItem(ID_MIGRATION_FLAG_KEY, "1");
     }
 
     window.localStorage.setItem(SEED_FLAG_KEY, "1");

@@ -90,6 +90,7 @@ export default function TodayPage() {
       <RecordDetailSheet
         record={detailRecord}
         onClose={() => setDetailRecord(null)}
+        onRecordUpdated={setDetailRecord}
       />
     </>
   );
