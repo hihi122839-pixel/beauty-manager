@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { TopNav } from "@/components/top-nav";
+import { BottomNav } from "@/components/bottom-nav";
 import { ToastProvider } from "@/components/toast-provider";
 import { RecordsHydrator } from "@/components/records-hydrator";
 
@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Beautylog",
-  description: "Beautylog · 记录护理项目、皮肤变化与提醒时间",
+  description: "Beautylog · 记录今天的医美项目，让美丽被看见",
   applicationName: "Beautylog",
   manifest: "/manifest.webmanifest",
   icons: {
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#D7C3A8",
+  themeColor: "#D7B79A",
 };
 
 export default function RootLayout({
@@ -41,20 +41,16 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-gradient-to-b from-[#fdfaf4] via-[#fcf8f1] to-[#f8f2e8] text-zinc-800">
+      <body className="min-h-full bg-[#F7F2EA] text-[#5A4636]">
         <ToastProvider>
           <RecordsHydrator />
-          <div className="mx-auto flex min-h-full w-full max-w-3xl flex-col px-4 py-4 sm:px-6 sm:py-8">
-            <header className="mb-4 sm:mb-8">
-              <div className="flex justify-center sm:justify-end">
-                <TopNav />
-              </div>
-            </header>
+          <div className="mx-auto flex min-h-full w-full max-w-lg flex-col px-4 pt-2 pb-28">
             <main className="flex-1">{children}</main>
           </div>
+          <BottomNav />
         </ToastProvider>
       </body>
     </html>

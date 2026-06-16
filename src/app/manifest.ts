@@ -4,11 +4,11 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Beautylog",
     short_name: "Beautylog",
-    description: "Beautylog · 记录护理项目、皮肤变化与提醒时间",
+    description: "Beautylog · 记录今天的医美项目，让美丽被看见",
     start_url: "/",
     display: "standalone",
-    background_color: "#F7F2E9",
-    theme_color: "#D7C3A8",
+    background_color: "#F7F2EA",
+    theme_color: "#D7B79A",
     icons: [
       {
         src: "/icon-192.png",
