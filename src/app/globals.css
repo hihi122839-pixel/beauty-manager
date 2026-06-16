@@ -17,7 +17,12 @@
 }
 
 body {
-  background: var(--background);
+  background: linear-gradient(
+    180deg,
+    #faf7f1 0%,
+    #f7f2ea 38%,
+    #f5efe6 100%
+  );
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
 }

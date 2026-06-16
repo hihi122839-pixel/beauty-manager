@@ -47,7 +47,7 @@ export default function RootLayout({
       <body className="min-h-full bg-[#F7F2EA] text-[#5A4636]">
         <ToastProvider>
           <RecordsHydrator />
-          <div className="mx-auto flex min-h-full w-full max-w-lg flex-col px-4 pt-2 pb-28">
+          <div className="mx-auto flex min-h-full w-full max-w-[430px] flex-col px-5 pt-2 pb-[140px]">
             <main className="flex-1">{children}</main>
           </div>
           <BottomNav />

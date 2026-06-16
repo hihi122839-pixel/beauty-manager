@@ -7,7 +7,7 @@ import {
   type SavedRecord,
 } from "@/lib/beauty-records";
 import { PROJECT_TAGS, toDateKey, type ProjectTag } from "@/lib/constants";
-import { StarRating } from "@/components/star-rating";
+import { FlowerRating } from "@/components/flower-rating";
 import { useToast } from "@/components/toast-provider";
 
 type RecordSheetProps = {
@@ -211,7 +211,7 @@ export function RecordSheet({ open, onClose }: RecordSheetProps) {
           <div className="space-y-2">
             <label className="text-sm text-[#5A4636]/80">满意度</label>
             <div className="flex items-center gap-2">
-              <StarRating
+              <FlowerRating
                 value={formData.satisfaction}
                 onChange={(value) =>
                   setFormData((prev) => ({ ...prev, satisfaction: value }))

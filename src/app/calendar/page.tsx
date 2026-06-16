@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useSyncExternalStore } from "react";
-import { StarRating } from "@/components/star-rating";
+import { FlowerRating } from "@/components/flower-rating";
 import { formatCost, toShortLabel } from "@/lib/constants";
 import {
   getBeautyRecordsSnapshot,
@@ -190,7 +190,7 @@ export default function CalendarPage() {
                 </div>
                 {item.satisfaction ? (
                   <div className="mt-2">
-                    <StarRating value={item.satisfaction} size="sm" />
+                    <FlowerRating value={item.satisfaction} size="sm" />
                   </div>
                 ) : null}
                 {item.hospital ? (

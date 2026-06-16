@@ -2,20 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CalendarDays, Home, UserRound } from "lucide-react";
 
 const navItems = [
-  { href: "/", label: "今日", icon: "🏠" },
-  { href: "/calendar", label: "日历", icon: "📅" },
-  { href: "/profile", label: "我的", icon: "👤" },
+  { href: "/", label: "记录", icon: Home },
+  { href: "/calendar", label: "日程", icon: CalendarDays },
+  { href: "/profile", label: "我的", icon: UserRound },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-      <div className="pointer-events-auto flex w-full max-w-md items-center justify-around gap-1 rounded-[2rem] border border-white/60 bg-white/72 px-2 py-2 shadow-[0_8px_32px_rgba(90,70,54,0.12)] ring-1 ring-[#e8ddd0]/80 backdrop-blur-xl">
+    <nav
+      className="pointer-events-none fixed left-1/2 z-40 w-[calc(100%-32px)] max-w-[390px] -translate-x-1/2"
+      style={{ bottom: "calc(16px + env(safe-area-inset-bottom))" }}
+    >
+      <div className="pointer-events-auto flex items-center justify-around gap-0.5 rounded-[1.5rem] border border-white/55 bg-white/78 px-1.5 py-1 shadow-[0_6px_24px_rgba(90,70,54,0.1)] ring-1 ring-[#e8ddd0]/70 backdrop-blur-xl">
         {navItems.map((item) => {
+          const Icon = item.icon;
           const isActive =
             item.href === "/"
               ? pathname === "/"
@@ -26,13 +31,13 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={[
-                "flex min-h-11 min-w-[4.5rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-[1.25rem] px-2 py-1.5 text-[11px] font-medium transition",
+                "flex min-h-10 min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-[1rem] px-2 py-1 text-[10px] font-medium transition",
                 isActive
-                  ? "bg-[#D7B79A]/35 text-[#B88762]"
-                  : "text-[#5A4636]/70 hover:text-[#5A4636]",
+                  ? "bg-[#D7B79A]/30 text-[#B88762]"
+                  : "text-[#9E9388]",
               ].join(" ")}
             >
-              <span className="text-base leading-none">{item.icon}</span>
+              <Icon size={22} strokeWidth={1.8} />
               <span>{item.label}</span>
             </Link>
           );

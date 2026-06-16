@@ -1,47 +1,31 @@
-import { formatCost } from "@/lib/constants";
 import type { SavedRecord } from "@/lib/beauty-records";
-import { StarRating } from "@/components/star-rating";
+import { FlowerRating } from "@/components/flower-rating";
 
 type RecordBubbleProps = {
   record: SavedRecord;
+  onClick: () => void;
 };
 
-export function RecordBubble({ record }: RecordBubbleProps) {
+export function RecordBubble({ record, onClick }: RecordBubbleProps) {
   const satisfaction = record.satisfaction ?? record.rating;
 
   return (
-    <article className="flex justify-end">
-      <div className="max-w-[88%] rounded-[1.35rem] rounded-br-md bg-white px-4 py-3.5 shadow-[0_8px_24px_rgba(90,70,54,0.1)] ring-1 ring-[#ece2d5]/80">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-[15px] font-semibold text-[#5A4636]">
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-[24px] border border-[rgba(215,183,154,0.28)] bg-[#fffdfa] px-3.5 py-3 text-left shadow-[0_6px_14px_rgba(90,70,54,0.06)] transition active:scale-[0.99] active:bg-white"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="truncate text-[14px] font-semibold text-[#5A4636]">
             {record.projectName}
-          </h3>
-          <time className="shrink-0 text-[11px] text-[#5A4636]/50">
-            {record.date.replace(/-/g, ".")}
-          </time>
+          </span>
+          {satisfaction ? <FlowerRating value={satisfaction} size="sm" /> : null}
         </div>
-
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          {satisfaction ? (
-            <StarRating value={satisfaction} size="sm" />
-          ) : null}
-          {record.cost ? (
-            <span className="text-xs font-medium text-[#B88762]">
-              {formatCost(record.cost)}
-            </span>
-          ) : null}
-        </div>
-
-        {record.hospital ? (
-          <p className="mt-2 text-xs text-[#5A4636]/65">{record.hospital}</p>
-        ) : null}
-
-        {record.experience ? (
-          <p className="mt-2 text-sm leading-relaxed text-[#5A4636]/80">
-            {record.experience}
-          </p>
-        ) : null}
+        <time className="shrink-0 text-[10px] text-[#5A4636]/35">
+          {record.date.replace(/-/g, ".")}
+        </time>
       </div>
-    </article>
+    </button>
   );
 }
